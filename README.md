@@ -1,1 +1,2 @@
-# Scratch-extension-focusing-on-save-function-Python-
+# Scratch⇄Python
+この2つ使ってScratchのプロジェクトにオートセーブ機能を追加することが主な目的
