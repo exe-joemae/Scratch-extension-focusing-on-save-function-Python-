@@ -1,12 +1,13 @@
+# GitHub Actions workflow: 実行すると script.py を走らせ、save_file.npy をアーティファクトにアップロードします。
+# オプションで直前の run のアーティファクトを API でダウンロードして復元する手順も含みます。
 on:
-  workflow_dispatch: {}      # 手動トリガー
-  schedule:
-    - cron: "*/1 * * * *"      # 毎日UTC 0:00（必要なら変更）
+  workflow_dispatch: {}
+  # schedule:
+  #   - cron: "*/1 * * * *"
 
 jobs:
   run-script:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -21,22 +22,61 @@ jobs:
           python -m pip install --upgrade pip
           pip install numpy scratchconnect
 
-      - name: Create pass.txt from Secrets
+      # --- 前回のアーティファクトを自動でリストしてダウンロード（オプション） ---
+      # このステップは必要なら有効化してください。GITHUB_TOKEN は自動で利用可。
+      - name: Try to restore save_file.npy from latest artifact (optional)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          # artifact 名で検索（この例では "save-file"）
+          ART_NAME="save-file"
+          echo "Looking for artifact named $ART_NAME ..."
+          # 1) artifacts API で一覧を取得
+          artifacts_json=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$REPO/actions/artifacts")
+          # 2) artifact id を抽出（name が一致する最新のものを採用）
+          ART_ID=$(echo "$artifacts_json" | python - <<'PY'
+import sys, json
+data=json.load(sys.stdin)
+name="save-file"
+arts=data.get("artifacts",[])
+# find most recent with matching name
+matches=[a for a in arts if a.get("name")==name]
+if not matches:
+    print("")
+else:
+    # sort by created_at desc
+    matches.sort(key=lambda x: x.get("created_at",""), reverse=True)
+    print(matches[0].get("id",""))
+PY
+)
+          if [ -z "$ART_ID" ]; then
+            echo "No previous artifact named $ART_NAME found. Skipping restore."
+          else
+            echo "Found artifact id: $ART_ID. Downloading..."
+            curl -s -L -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/$REPO/actions/artifacts/$ART_ID/zip" \
+              --output artifact.zip
+            unzip -o artifact.zip -d restored || true
+            if [ -f restored/save_file.npy ]; then
+              mv restored/save_file.npy ./save_file.npy
+              echo "Restored save_file.npy"
+            else
+              echo "No save_file.npy inside artifact."
+            fi
+          fi
+
+      - name: Run script.py
         env:
           SCRATCH_USERNAME: ${{ secrets.SCRATCH_USERNAME }}
           SCRATCH_PASSWORD: ${{ secrets.SCRATCH_PASSWORD }}
-        run: |
-          # pass.txt をリポジトリルートに作成（スクリプトが既存のまま使えるようにする）
-          echo "${SCRATCH_USERNAME}" > pass.txt
-          echo "${SCRATCH_PASSWORD}" >> pass.txt
-          # 権限を制限（任意）
-          chmod 600 pass.txt
-
-      - name: Run script.py
         run: python script.py
 
       - name: Upload save_file.npy as artifact
-        if: success() || failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: save-file
