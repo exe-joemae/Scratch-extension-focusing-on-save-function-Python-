@@ -1,0 +1,35 @@
+name: Scratch Cloud Worker
+
+on:
+  schedule:
+    - cron: "*/1 * * * *"
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install packages
+        run: pip install scratchconnect numpy
+
+      - name: Run script
+        env:
+          SCRATCH_USERNAME: ${{ secrets.SCRATCH_USERNAME }}
+          SCRATCH_PASSWORD: ${{ secrets.SCRATCH_PASSWORD }}
+        run: python script.py
+
+      - name: Commit data
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add save_file.npy
+          git commit -m "Update save file" || echo "No changes to commit"
+          git push
