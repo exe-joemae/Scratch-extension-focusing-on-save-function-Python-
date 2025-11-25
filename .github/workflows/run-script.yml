@@ -2,13 +2,19 @@ name: run-script
 on:
   workflow_dispatch:
   schedule:
-    - cron: '*/1 * * * *'
+    - cron: '*/5 * * * *'  # 5分ごとにジョブを開始（ジョブ内で1分ごとにループ実行）
+
+concurrency:
+  group: run-script
+  cancel-in-progress: true
 
 jobs:
   run:
     runs-on: ubuntu-latest
+    timeout-minutes: 15   # 必要に応じて調整（最大はリポジトリ/プランによる）
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -16,13 +22,24 @@ jobs:
           python-version: "3.11"
 
       - name: Install deps
-        run: pip install --upgrade pip && pip install numpy scratchconnect
+        run: |
+          python -m pip install --upgrade pip
+          pip install numpy scratchconnect
 
-      - name: Run script
+      - name: Run script every minute for 5 minutes
         env:
           SCRATCH_USERNAME: ${{ secrets.SCRATCH_USERNAME }}
           SCRATCH_PASSWORD: ${{ secrets.SCRATCH_PASSWORD }}
-        run: python script.py
+        run: |
+          # 5回ループ（必要なら回数を変えてください）
+          for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do
+            echo "Run #$i at $(date)"
+            python script.py || echo "script.py exited with code $? (see logs)"
+            # 最後のループ後の sleep は不要だが、ループ間隔を1分に保つ
+            if [ $i -lt 5 ]; then
+              sleep 10
+            fi
+          done
 
       - name: Upload save_file.npy
         if: ${{ always() }}
@@ -30,12 +47,3 @@ jobs:
         with:
           name: save-file
           path: save_file.npy
-
-      # ※ 同一ジョブ内でアップロード直後にダウンロードする必要がなければ以下は削除して構いません。
-      - name: Download save-file
-        uses: actions/download-artifact@v4
-        with:
-          name: save-file
-          path: .
-      - name: Inspect
-        run: ls -l save_file.npy
