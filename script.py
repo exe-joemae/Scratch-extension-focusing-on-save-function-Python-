@@ -1,21 +1,26 @@
 # -*- coding: utf-8 -*-
+# 既存スクリプトに「環境変数優先の認証取得」を追加した簡易版
 import scratchconnect
 import numpy as np
 import os
 
 SAVE_FILE = "save_file.npy"
 
-# Load save_file
+# ------------ 1. Load save_file -------------------
 if os.path.exists(SAVE_FILE):
     data_list = np.load(SAVE_FILE, allow_pickle=True)
 else:
     data_list = np.empty((1, 4), dtype=object)
     data_list[:] = "0"
 
-# Credentials: prefer environment variables, fallback to pass.txt
+print("Loaded data_list:")
+print(data_list)
+
+# ------------ 2. Credentials (prefer environment variables) -----
 username = os.environ.get("SCRATCH_USERNAME")
 password = os.environ.get("SCRATCH_PASSWORD")
 
+# Fallback to pass.txt only if env var not set
 if not username or not password:
     if os.path.exists("pass.txt"):
         with open("pass.txt", "r", encoding="utf-8") as f:
