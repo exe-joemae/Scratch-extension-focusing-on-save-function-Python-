@@ -5,20 +5,22 @@ import os
 
 SAVE_FILE = "save_file.npy"
 
-# ------------ 1. Load save_file -------------------
+# Load save_file
 if os.path.exists(SAVE_FILE):
     data_list = np.load(SAVE_FILE, allow_pickle=True)
 else:
     data_list = np.empty((1, 4), dtype=object)
     data_list[:] = "0"
 
-print("Loaded data_list:")
-print(data_list)
+# Credentials: prefer environment variables, fallback to pass.txt
+username = os.environ.get("SCRATCH_USERNAME")
+password = os.environ.get("SCRATCH_PASSWORD")
 
-# ------------ 2. Credentials (GitHub Secrets) -----
-with open("pass.txt", "r", encoding="utf-8") as f:
-    username = f.readline().strip()
-    password = f.readline().strip()
+if not username or not password:
+    if os.path.exists("pass.txt"):
+        with open("pass.txt", "r", encoding="utf-8") as f:
+            username = f.readline().strip()
+            password = f.readline().strip()
 
 if not username or not password:
     raise Exception("SCRATCH_USERNAME or SCRATCH_PASSWORD not set.")
