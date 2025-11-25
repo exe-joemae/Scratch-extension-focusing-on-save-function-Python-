@@ -1,35 +1,43 @@
-name: Scratch Cloud Worker
-
 on:
+  workflow_dispatch: {}      # 手動トリガー
   schedule:
-    - cron: "*/1 * * * *"
-  workflow_dispatch:
+    - cron: "*/1 * * * *"      # 毎日UTC 0:00（必要なら変更）
 
 jobs:
-  run:
+  run-script:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: '3.11'
 
-      - name: Install packages
-        run: pip install scratchconnect numpy
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install numpy scratchconnect
 
-      - name: Run script
+      - name: Create pass.txt from Secrets
         env:
           SCRATCH_USERNAME: ${{ secrets.SCRATCH_USERNAME }}
           SCRATCH_PASSWORD: ${{ secrets.SCRATCH_PASSWORD }}
+        run: |
+          # pass.txt をリポジトリルートに作成（スクリプトが既存のまま使えるようにする）
+          echo "${SCRATCH_USERNAME}" > pass.txt
+          echo "${SCRATCH_PASSWORD}" >> pass.txt
+          # 権限を制限（任意）
+          chmod 600 pass.txt
+
+      - name: Run script.py
         run: python script.py
 
-      - name: Commit data
-        run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add save_file.npy
-          git commit -m "Update save file" || echo "No changes to commit"
-          git push
+      - name: Upload save_file.npy as artifact
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: save-file
+          path: save_file.npy
