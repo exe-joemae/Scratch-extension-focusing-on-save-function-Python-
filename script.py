@@ -16,7 +16,7 @@ print("Loaded data_list:")
 print(data_list)
 
 # ------------ 2. Credentials (GitHub Secrets) -----
-with open("S:\sc_py/pass.txt", "r", encoding="utf-8") as f:
+with open("pass.txt", "r", encoding="utf-8") as f:
     username = f.readline().strip()
     password = f.readline().strip()
 
