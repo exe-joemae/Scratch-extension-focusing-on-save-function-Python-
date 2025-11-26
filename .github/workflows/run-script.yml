@@ -31,6 +31,7 @@ jobs:
         with:
           name: save-file
           path: save_file.npy
+          continue-on-error: true
 
       - name: Set up Python
         uses: actions/setup-python@v4
