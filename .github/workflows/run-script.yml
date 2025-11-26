@@ -36,7 +36,7 @@ jobs:
             echo "Run #$i at $(date)"
             python script.py || echo "script.py exited with code $? (see logs)"
             # 最後のループ後の sleep は不要だが、ループ間隔を1分に保つ
-            if [ $i -lt 5 ]; then
+            if [ $i -lt 30 ]; then
               sleep 10
             fi
           done
