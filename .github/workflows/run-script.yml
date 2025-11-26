@@ -15,11 +15,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-  　　- name: Remove save_file.npy if exists
-    　　run: |
-    　　　if [ -f save_file.npy ]; then
-      　　　rm save_file.npy
-   　　 　fi
+      - name: Remove save_file.npy if exists
+        run: |
+          if [ -f save_file.npy ]; then
+            rm save_file.npy
+          fi
 
       - name: Set up Python
         uses: actions/setup-python@v4
