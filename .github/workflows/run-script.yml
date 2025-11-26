@@ -10,60 +10,59 @@ concurrency:
 
 jobs:
   run:
-    build:
-      needs: build
+    needs: build
       
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  runs-on: ubuntu-latest
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
 
-      - name: Install deps
-        run: |
-          python -m pip install --upgrade pip
-          pip install numpy scratchconnect
+    - name: Install deps
+      run: |
+        python -m pip install --upgrade pip
+        pip install numpy scratchconnect
           
-      - name: Download save-file artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: save-file
-          path: save_file.npy
+    - name: Download save-file artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: save-file
+        path: save_file.npy
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
 
-      - name: Install numpy
-        run: pip install numpy
+    - name: Install numpy
+      run: pip install numpy
 
-      - name: Use save_file.npy in Python
-        run: |
-          python -c "import numpy as np; print(np.load('save_file.npy'))"
+    - name: Use save_file.npy in Python
+      run: |
+        python -c "import numpy as np; print(np.load('save_file.npy'))"
           
-      - name: Run script every minute for 5 minutes
-        env:
-          SCRATCH_USERNAME: ${{ secrets.SCRATCH_USERNAME }}
-          SCRATCH_PASSWORD: ${{ secrets.SCRATCH_PASSWORD }}
-        run: |
-          # 5回ループ（必要なら回数を変えてください）
-            for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do
-            echo "Run #$i at $(date)"
-            python script.py || echo "script.py exited with code $? (see logs)"
-            # 最後のループ後の sleep は不要だが、ループ間隔を1分に保つ
-            if [ $i -lt 30 ]; then
-              sleep 10
-            fi
-          done
+    - name: Run script every minute for 5 minutes
+      env:
+        SCRATCH_USERNAME: ${{ secrets.SCRATCH_USERNAME }}
+        SCRATCH_PASSWORD: ${{ secrets.SCRATCH_PASSWORD }}
+      run: |
+        # 5回ループ（必要なら回数を変えてください）
+          for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do
+          echo "Run #$i at $(date)"
+          python script.py || echo "script.py exited with code $? (see logs)"
+          # 最後のループ後の sleep は不要だが、ループ間隔を1分に保つ
+          if [ $i -lt 30 ]; then
+            sleep 10
+          fi
+        done
 
-      - name: Upload save_file.npy
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: save-file
-          path: save_file.npy
+    - name: Upload save_file.npy
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: save-file
+        path: save_file.npy
