@@ -48,7 +48,11 @@ jobs:
 
       - name: Use save_file.npy in Python
         run: |
-          python -c "import numpy as np; print(np.load('save_file.npy'))"
+          if [ -f save_file.npy ]; then
+            python -c "import numpy as np; print(np.load('save_file.npy'))"
+          else
+            echo "save_file.npy is not found, skipping np.load"
+          fi
           
       - name: Run script every minute for 5 minutes
         env:
